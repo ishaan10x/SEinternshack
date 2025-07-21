@@ -1,3 +1,7 @@
+# Use new KV cache scheme
+import os
+os.environ['LLAMA_SET_ROWS'] = '1'
+
 from pathlib import Path
 from llama_cpp import Llama
 import multiprocessing
@@ -25,7 +29,7 @@ try:
         use_mmap=use_mmap,
         verbose=False
     )
-    print("Model loaded successfully! Type 'exit' to quit.")
+    print("Model loaded successfully! Type 'exit' to quit.\n")
 
 except Exception as e:
     print(f"An unexpected error occurred during model loading: {e}")
@@ -46,17 +50,24 @@ while True:
     messages.append({"role": "user", "content": user_prompt})
 
     try:
-        response = llm.create_chat_completion(
+        stream = llm.create_chat_completion(
             messages=messages,
             max_tokens=500,
-            stop=["<|im_end|>", "</s>", "<|user|>", "You:"], 
-            temperature=0.7 
+            stop=["<|im_end|>", "</s>", "<|user|>", "You:"],
+            temperature=0.7,
+            stream=True
         )
-        
-        assistant_reply = response["choices"][0]["message"]["content"].strip()
-        print("Llama:", assistant_reply)
-        
-        messages.append({"role": "assistant", "content": assistant_reply})
+
+        assistant_reply = ""
+        print("Llama: ", end="", flush=True)
+        for chunk in stream:
+            delta = chunk["choices"][0]["delta"]
+            if "content" in delta:
+                print(delta["content"], end="", flush=True)
+                assistant_reply += delta["content"]
+        print()
+
+        messages.append({"role": "assistant", "content": assistant_reply.strip()})
 
     except Exception as e:
         print(f"An error occurred during inference: {e}")
