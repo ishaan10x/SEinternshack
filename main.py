@@ -11,8 +11,6 @@ model_path = Path("./models/Meta-Llama-3-8B-Instruct.Q6_K.gguf")
 optimal_n_threads = multiprocessing.cpu_count()
 context_window_size = 8192
 batch_size = 512
-use_mlock = True
-use_mmap = True
 
 try:
     print(f"Loading model from: {model_path}")
@@ -22,22 +20,23 @@ try:
 
     llm = Llama(
         model_path=str(model_path),
-        n_ctx=context_window_size,
-        n_threads=optimal_n_threads,
-        n_batch=batch_size,
-        use_mlock=use_mlock,
-        use_mmap=use_mmap,
-        verbose=False
+        n_ctx= context_window_size,
+        n_threads= optimal_n_threads,
+        n_batch= batch_size,
+        use_mlock= True,
+        use_mmap= True,
+        verbose= False
     )
-    print("Model loaded successfully! Type 'exit' to quit.\n")
-
+    print("Enter your message to be masked or type 'exit' to quit.\n")
 except Exception as e:
     print(f"An unexpected error occurred during model loading: {e}")
     print("Ensure llama-cpp-python is correctly installed and compatible with your system.")
     exit()
 
-
 #Chatting
+
+# Define the system prompt for redaction
+SYSTEM_PROMPT = "You are a helpful assistant that redacts personal information from user messages. Your task is to identify and replace any names, email addresses, and phone numbers with '[REDACTED]'. The rest of the message should remain exactly the same. If no personal information is found, return the original message unchanged."
 
 messages = []
 
@@ -47,11 +46,16 @@ while True:
         print("Exiting chat. Goodbye!")
         break
     
-    messages.append({"role": "user", "content": user_prompt})
+    # Always start with the system prompt, then add user message
+    # This ensures the system prompt is always at the beginning of the conversation for the model.
+    messages_for_completion = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages_for_completion.extend(messages) # Add previous conversation history
+    messages_for_completion.append({"role": "user", "content": user_prompt})
+
 
     try:
         stream = llm.create_chat_completion(
-            messages=messages,
+            messages=messages_for_completion, # Use the combined messages including system prompt
             max_tokens=500,
             stop=["<|im_end|>", "</s>", "<|user|>", "You:"],
             temperature=0.7,
@@ -67,9 +71,12 @@ while True:
                 assistant_reply += delta["content"]
         print()
 
-        messages.append({"role": "assistant", "content": assistant_reply.strip()})
+        # Append only the user and assistant messages to the main conversation history
+        # The system prompt is prepended for each completion call but not stored in `messages`
+        messages.append({"role": "user", "content": user_prompt}) # Add user prompt to history
+        messages.append({"role": "assistant", "content": assistant_reply.strip()}) # Add assistant reply to history
 
     except Exception as e:
         print(f"An error occurred during inference: {e}")
         print("Please check your model and prompt. Resetting conversation history due to error.")
-        messages = []
+        messages = [] # Reset messages on error
