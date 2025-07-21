@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LLaMA Chat</title>
+</head>
+<body>
+  <h1>Talk to LLaMA</h1>
+
+  <input id="prompt" type="text" placeholder="say something" />
+  <button onclick="sendPrompt()">Send</button>
+
+  <h3>Response:</h3>
+  <pre id="response"
+       style="white-space: pre-wrap; border: 1px solid #ccc;
+              padding: 10px; min-height: 50px;">
+  </pre>
+
+  <script>
+    async function sendPrompt() {
+      const prompt = document.getElementById('prompt').value;
+
+      try {
+        const res = await fetch('http://localhost:5000/prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await res.json();
+        document.getElementById('response').textContent = data.response;
+      } catch (err) {
+        console.error('Fetch error:', err);
+        document.getElementById('response').textContent =
+          'Error talking to the model.';
+      }
+    }
+  </script>
+</body>
+</html>
