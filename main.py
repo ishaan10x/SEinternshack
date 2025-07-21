@@ -27,11 +27,11 @@ try:
         use_mmap= True,
         verbose= False
     )
-    print("Enter your message to be masked or type 'exit' to quit.\n")
 except Exception as e:
     print(f"An unexpected error occurred during model loading: {e}")
     print("Ensure llama-cpp-python is correctly installed and compatible with your system.")
     exit()
+
 
 #Chatting
 
@@ -63,32 +63,25 @@ PRESERVE:
 - Industry-standard concepts
 Ensure consistency, readability, and complete privacy."""
 
-messages = []
-
 while True:
-    user_prompt = input("You: ")
-    if user_prompt.lower() == 'exit':
-        print("Exiting chat. Goodbye!")
-        break
+    user_prompt = input("\nYou: ")
     
-    # Always start with the system prompt, then add user message
-    # This ensures the system prompt is always at the beginning of the conversation for the model.
-    messages_for_completion = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages_for_completion.extend(messages) # Add previous conversation history
-    messages_for_completion.append({"role": "user", "content": user_prompt})
-
+    messages_for_completion = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt}
+    ]
 
     try:
         stream = llm.create_chat_completion(
-            messages=messages_for_completion, # Use the combined messages including system prompt
-            max_tokens=500,
+            messages=messages_for_completion,
+            max_tokens=1000,
             stop=["<|im_end|>", "</s>", "<|user|>", "You:"],
             temperature=0.7,
             stream=True
         )
 
         assistant_reply = ""
-        print("Llama: ", end="", flush=True)
+        print("\nTrust Layer: ", end="", flush=True)
         for chunk in stream:
             delta = chunk["choices"][0]["delta"]
             if "content" in delta:
@@ -96,12 +89,5 @@ while True:
                 assistant_reply += delta["content"]
         print()
 
-        # Append only the user and assistant messages to the main conversation history
-        # The system prompt is prepended for each completion call but not stored in `messages`
-        messages.append({"role": "user", "content": user_prompt}) # Add user prompt to history
-        messages.append({"role": "assistant", "content": assistant_reply.strip()}) # Add assistant reply to history
-
     except Exception as e:
         print(f"An error occurred during inference: {e}")
-        print("Please check your model and prompt. Resetting conversation history due to error.")
-        messages = [] # Reset messages on error
