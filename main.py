@@ -36,7 +36,32 @@ except Exception as e:
 #Chatting
 
 # Define the system prompt for redaction
-SYSTEM_PROMPT = "You are a helpful assistant that redacts personal information from user messages. Your task is to identify and replace any names, email addresses, and phone numbers with '[REDACTED]'. The rest of the message should remain exactly the same. If no personal information is found, return the original message unchanged."
+SYSTEM_PROMPT = f"""Remove ALL sensitive information while keeping the text useful for AI assistance. This is for corporate use - strip anything that could identify people, companies, or leak business intelligence.
+ALWAYS REPLACE WITH RANGES/GENERICS:
+- ALL personal names → Person A, Person B, Person C (be consistent - don't miss any!)
+- ALL company names → Company X, Company Y, Client Corp, etc.
+- ALL email addresses → contact@example.com, client@example.com
+- ALL phone numbers → 555-0000
+- Exact dollar amounts → proper ranges
+- Project names → Project Alpha, Project Beta
+- System names → System A, Database X
+- Account numbers, IDs → [ACCOUNT], [ID-123]
+- Dates → [DATE], next week, Q4
+- Titles with names → Person C (Role), etc.
+REDACT:
+- Client names and identifiers
+- Internal team/department names
+- Proprietary platform names
+- IPs, URLs, physical addresses
+- Contract/ticket/deal numbers
+- Vendor names and internal process names
+PRESERVE:
+- Technical metrics
+- Business requirements
+- Job roles/titles
+- General cities or timing
+- Industry-standard concepts
+Ensure consistency, readability, and complete privacy."""
 
 messages = []
 
