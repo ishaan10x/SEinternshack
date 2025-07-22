@@ -38,21 +38,18 @@ Examples:
 - Marcus Thompson → Emma Davis
 - Sarah Chen → Lisa Johnson
 - David Rodriguez → Ryan Wilson
-Text: {text}
-Text with names replaced:"""
+"""
 companies_prompt=f"""Replace ONLY company names with appropriate business descriptions. Don't change anything else.
 Examples:
 - Goldman Sachs → our financial services client
 - Microsoft → the tech company
 - Pfizer → our pharmaceutical client
-Text: {text}
 Text with companies replaced:"""
 emails_prompt=f"""Replace ONLY email addresses with generic emails. Don't change anything else.
 Examples:
 - m.thompson@gs.com → contact@example.com
 - s.chen@microsoft.com → team@example.com
 - Any email → contact@example.com, info@example.com
-Text: {text}
 Text with emails replaced:"""
 numbers_prompt=f"""Replace ONLY phone numbers and money amounts. Don't change anything else.
 Examples:
@@ -141,8 +138,8 @@ def handle_prompt():
                 }) + "\n\n"
                 break  # stop the chain if an error occurs
 
-        # Return a streaming response
-        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+    # Return a streaming response
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)
